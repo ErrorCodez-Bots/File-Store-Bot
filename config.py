@@ -14,9 +14,9 @@ SHORT_TUT = "https://t.me/How_To_Download_ATK/2"
 
 # Bot Configuration
 SESSION = "zenitsu"
-TOKEN = "7976435464:AAHDowmhRUxcnlW5FrBKckQr0JG5BcF4Qfs"
-API_ID = "20293219"
-API_HASH = "4aef7d9e065d92f4a95736eaeb93d3ac"
+TOKEN = "7976"
+API_ID = ""
+API_HASH = ""
 WORKERS = 5
 
 DB_URI = "mongodb"
