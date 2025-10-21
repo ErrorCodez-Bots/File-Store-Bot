@@ -5,7 +5,7 @@
 </h2>
 
 <p align="center">
-  <img src="https://telegra.ph/file/ce46d87ac8bfb6e6e0738-75a69090c41a62487d.jpg">
+  <img src="https://telegra.ph/file/fee99f091e6352fb81df0-f76172e5916d37d5c6.jpg">
 </p>
 
 <p align="center">
