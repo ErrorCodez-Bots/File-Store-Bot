@@ -304,16 +304,30 @@ def force_sub(func):
     async def wrapper(client: Client, message: Message):
         if not client.fsub_dict:
             return await func(client, message)
+            
         photo = client.messages.get('FSUB_PHOTO', '')
         if photo:
             msg = await message.reply_photo(
-                caption="<b>ᴡᴀɪᴛ ᴀ sᴇᴄᴏɴᴅ.....</b>", 
+                caption="<b>ᴡᴀɪᴛ ᴀ sᴇᴄᴏɴᴅ.</b>", 
                 photo=photo
             )
         else:
             msg = await message.reply(
-                "<code><b>ᴡᴀɪᴛ ᴀ sᴇᴄᴏɴᴅ.....</b></code>"
+                "<code><b>ᴡᴀɪᴛ ᴀ sᴇᴄᴏɴᴅ.</b></code>"
             )
+
+        # Animated dots animation on the temporary message
+        for dots in [".", "..", "..."]:
+            await asyncio.sleep(0.4)
+            try:
+                text_to_show = f"<b>ᴡᴀɪᴛ ᴀ sᴇᴄᴏɴᴅ{dots}</b>"
+                if photo:
+                    await msg.edit_caption(caption=text_to_show)
+                else:
+                    await msg.edit_text(text=f"<code>{text_to_show}</code>")
+            except Exception:
+                pass
+
         user_id = message.from_user.id
         statuses = await check_subscription(client, user_id)
 
@@ -343,23 +357,14 @@ def force_sub(func):
 
             # Add button based on user status
             if status not in {ChatMemberStatus.MEMBER, ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER}:
-                # Check if user has already submitted request for request channels
                 if request and await client.mongodb.has_submitted_join_request(user_id, channel_id):
                     request_status = await client.mongodb.get_join_request_status(user_id, channel_id)
                     if request_status == "pending":
-                        # Don't add button if request is still pending
                         continue
-                    elif request_status == "approved":
-                        # User can now join the channel
-                        button_text = f"{channel_name}"
                     else:
                         button_text = f"{channel_name}"
                 else:
-                    # User hasn't submitted request or it's a regular channel
-                    if request:
-                        button_text = f"{channel_name}"
-                    else:
-                        button_text = f"{channel_name}"
+                    button_text = f"{channel_name}"
                 
                 buttons.append(InlineKeyboardButton(button_text, url=channel_link))
 
@@ -369,16 +374,16 @@ def force_sub(func):
             try_again_link = f"https://t.me/{client.username}/?start={from_link[1]}"
             buttons.append(InlineKeyboardButton("🔄 Try Again", url=try_again_link))
 
-        # Organize buttons in rows of 1 for better readability
-        buttons_markup = InlineKeyboardMarkup([[button] for button in buttons])
-        buttons_markup = None if not buttons else buttons_markup
+        buttons_markup = InlineKeyboardMarkup([[button] for button in buttons]) if buttons else None
 
-        # Edit message with status update and buttons
+        # Edit message with final status and sub buttons
         try:
-            await msg.edit_text(text=channels_message, reply_markup=buttons_markup)
+            if photo:
+                await msg.edit_caption(caption=channels_message, reply_markup=buttons_markup)
+            else:
+                await msg.edit_text(text=channels_message, reply_markup=buttons_markup)
         except Exception as e:
             client.LOGGER(__name__, client.name).warning(f"Error updating force sub message: {e}")
-            # Fallback: send new message if edit fails
             try:
                 await msg.delete()
                 await message.reply(text=channels_message, reply_markup=buttons_markup)
@@ -386,6 +391,7 @@ def force_sub(func):
                 pass
 
     return wrapper
+
 
 #===============================================================#
 
