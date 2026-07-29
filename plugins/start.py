@@ -1,13 +1,19 @@
-from helper.helper_func import *
+import asyncio
 from pyrogram import Client, filters
+from pyrogram.errors import FloodWait
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 import humanize
+
 from config import MSG_EFFECT, OWNER_ID
 from plugins.shortner import get_short
-from helper.helper_func import get_messages, force_sub, decode, batch_auto_del_notification
-import asyncio
+from helper.helper_func import (
+    get_messages,
+    force_sub,
+    decode,
+    batch_auto_del_notification
+)
 
-#===============================================================#
+# =============================================================== #
 
 @Client.on_message(filters.command('start') & filters.private)
 @force_sub
@@ -92,7 +98,7 @@ async def start_command(client: Client, message: Message):
                 start_primary = int(encoded_start / primary_multiplier)
                 end_primary = int(encoded_end / primary_multiplier)
                 
-                # Check if the division results in clean integers (meaning this channel was used for encoding)
+                # Check if the division results in clean integers
                 if encoded_start % primary_multiplier == 0 and encoded_end % primary_multiplier == 0:
                     source_channel_id = client.db
                     start = start_primary
@@ -120,7 +126,7 @@ async def start_command(client: Client, message: Message):
                         start = start_primary
                         end = end_primary
                 
-                ids = range(start, end + 1) if start <= end else list(range(start, end - 1, -1))
+                ids = list(range(start, end + 1)) if start <= end else list(range(start, end - 1, -1))
 
             elif len(argument) == 2:
                 # Single message
@@ -165,7 +171,6 @@ async def start_command(client: Client, message: Message):
         messages = []
 
         try:
-            # Try to get messages from the identified source channel first
             if source_channel_id:
                 client.LOGGER(__name__, client.name).info(f"Trying to get messages from source channel: {source_channel_id}")
                 try:
@@ -173,27 +178,22 @@ async def start_command(client: Client, message: Message):
                         chat_id=source_channel_id,
                         message_ids=list(ids)
                     )
-                    # Filter out None messages (deleted/not found)
                     valid_msgs = [msg for msg in msgs if msg is not None]
                     messages.extend(valid_msgs)
                     client.LOGGER(__name__, client.name).info(f"Found {len(valid_msgs)} messages from source channel {source_channel_id}")
                     
-                    # If we didn't get all messages, try the fallback system
                     if len(valid_msgs) < len(list(ids)):
                         missing_ids = [mid for mid in ids if mid not in {msg.id for msg in valid_msgs}]
                         if missing_ids:
                             client.LOGGER(__name__, client.name).info(f"Missing {len(missing_ids)} messages, trying fallback system")
-                            # Use the fallback system for missing messages
                             additional_messages = await get_messages(client, missing_ids)
                             messages.extend(additional_messages)
                             client.LOGGER(__name__, client.name).info(f"Found {len(additional_messages)} additional messages from fallback")
                 except Exception as e:
                     client.LOGGER(__name__, client.name).warning(f"Error getting messages from source channel {source_channel_id}: {e}")
-                    # Fallback to the multi-channel system
                     messages = await get_messages(client, ids)
             else:
                 client.LOGGER(__name__, client.name).info("No specific source channel identified, using multi-channel fallback")
-                # Use the multi-channel fallback system
                 messages = await get_messages(client, ids)
         except Exception as e:
             await temp_msg.edit_text("Something went wrong!")
@@ -223,7 +223,7 @@ async def start_command(client: Client, message: Message):
                 )
                 yugen_msgs.append(copied_msg)
             except FloodWait as e:
-                await asyncio.sleep(e.x)
+                await asyncio.sleep(e.value)
                 copied_msg = await msg.copy(
                     chat_id=message.from_user.id,
                     caption=caption,
@@ -233,14 +233,11 @@ async def start_command(client: Client, message: Message):
                 yugen_msgs.append(copied_msg)
             except Exception as e:
                 client.LOGGER(__name__, client.name).warning(f"Failed to send message: {e}")
-                pass
 
         # 8. Auto delete timer
         if messages and client.auto_del > 0:
-            # Create transfer link for getting files again (original base64_string)
             transfer_link = original_payload
             
-            # Start batch auto delete notification - single notification for all files
             asyncio.create_task(batch_auto_del_notification(
                 bot_username=client.username,
                 messages=yugen_msgs,
@@ -283,12 +280,12 @@ async def start_command(client: Client, message: Message):
             )
         return
 
-#===============================================================#
+# =============================================================== #
 
 @Client.on_message(filters.command('request') & filters.private)
 async def request_command(client: Client, message: Message):
     user_id = message.from_user.id
-    is_admin = user_id in client.admins  # ✅ Fix this line
+    is_admin = user_id in client.admins
     is_user_premium = await client.mongodb.is_pro(user_id)
 
     if is_admin or user_id == OWNER_ID:
@@ -296,9 +293,9 @@ async def request_command(client: Client, message: Message):
         return
 
     if not is_user_premium: 
-        BUTTON_URL = "https://t.me/hanime_arena/5"
+        button_url = "https://t.me/hanime_arena/5"
         reply_markup = InlineKeyboardMarkup([
-            [InlineKeyboardButton("💎 Upgrade to Premium", url=BUTTON_URL)]
+            [InlineKeyboardButton("💎 Upgrade to Premium", url=button_url)]
         ])
         await message.reply(
             "❌ **You are not a premium user.**\nUpgrade to premium to access this feature.",
@@ -321,12 +318,12 @@ async def request_command(client: Client, message: Message):
     await client.send_message(OWNER_ID, owner_message)
     await message.reply("✅ **Thanks for your request!**\nYour request will be reviewed soon. Please wait.")
 
-#===============================================================#
+# =============================================================== #
 
 @Client.on_message(filters.command('profile') & filters.private)
 async def my_plan(client: Client, message: Message):
     user_id = message.from_user.id
-    is_admin = user_id in client.admins  # ✅ Fix here
+    is_admin = user_id in client.admins
 
     if is_admin or user_id == OWNER_ID:
         await message.reply_text("🔹 You're my sensei! This command is only for users.")
