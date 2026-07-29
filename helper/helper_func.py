@@ -308,19 +308,19 @@ def force_sub(func):
         photo = client.messages.get('FSUB_PHOTO', '')
         if photo:
             msg = await message.reply_photo(
-                caption="<b>ᴡᴀɪᴛ ᴀ sᴇᴄᴏɴᴅ.</b>", 
+                caption="Wait a second .", 
                 photo=photo
             )
         else:
             msg = await message.reply(
-                "<code><b>ᴡᴀɪᴛ ᴀ sᴇᴄᴏɴᴅ.</b></code>"
+                "<code>Wait a second .</code>"
             )
 
         # Animated dots animation on the temporary message
-        for dots in [".", "..", "..."]:
+        for dots in [" .", " . .", " . . ."]:
             await asyncio.sleep(0.4)
             try:
-                text_to_show = f"<b>ᴡᴀɪᴛ ᴀ sᴇᴄᴏɴᴅ{dots}</b>"
+                text_to_show = f"Wait a second{dots}"
                 if photo:
                     await msg.edit_caption(caption=text_to_show)
                 else:
@@ -493,7 +493,7 @@ async def batch_auto_del_notification(bot_username, messages, delay_time, transf
                 button = [[InlineKeyboardButton(text=name, url=link), InlineKeyboardButton(text="ᴄʟᴏsᴇ •", callback_data="close")]]
                 
                 await notification_msg.edit_text(
-                    text=f"<b>›› Pʀᴇᴠɪᴏᴜs Mᴇssᴀɢᴇ ᴡᴀs Dᴇʟᴇᴛᴇᴅ\n\nIғ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ ɢᴇᴛ ᴛʜᴇ ғɪʟᴇs ᴀɢᴀɪɴ, ᴛʜᴇɴ ᴄʟɪᴄᴋ: <a href={link}>{name}</a> ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ ᴇʟsᴇ ᴄʟᴏsᴇ ᴛʜɪs ᴍᴇssᴀɢᴇ.</b>",
+                    text=f"<b>›› PʀᴇᴠɪᴏUs Mᴇssᴀɢᴇ ᴡᴀs Dᴇʟᴇᴛᴇᴅ\n\nIғ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ ɢᴇᴛ ᴛʜᴇ ғɪʟᴇs ᴀɢᴀɪɴ, ᴛʜᴇɴ ᴄʟɪᴄᴋ: <a href={link}>{name}</a> ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ ᴇʟsᴇ ᴄʟᴏsᴇ ᴛʜɪs ᴍᴇssᴀɢᴇ.</b>",
                     reply_markup=InlineKeyboardMarkup(button),
                     disable_web_page_preview=True
                 )
