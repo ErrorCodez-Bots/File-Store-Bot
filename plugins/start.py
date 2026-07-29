@@ -79,7 +79,7 @@ async def start_command(client: Client, message: Message):
                     ]
                 ])
             )
-            return  # prevent sending actual files
+            return
 
         # 6. Decode and prepare file IDs
         try:
@@ -89,23 +89,18 @@ async def start_command(client: Client, message: Message):
             source_channel_id = None
 
             if len(argument) == 3:
-                # Try to determine source channel from encoded multiplier
                 encoded_start = int(argument[1])
                 encoded_end = int(argument[2])
                 
-                # Try primary channel first
                 primary_multiplier = abs(client.db)
                 start_primary = int(encoded_start / primary_multiplier)
                 end_primary = int(encoded_end / primary_multiplier)
                 
-                # Check if the division results in clean integers
                 if encoded_start % primary_multiplier == 0 and encoded_end % primary_multiplier == 0:
                     source_channel_id = client.db
                     start = start_primary
                     end = end_primary
-                    client.LOGGER(__name__, client.name).info(f"Decoded batch from primary channel {source_channel_id}: {start}-{end}")
                 else:
-                    # Try secondary channels
                     db_channels = getattr(client, 'db_channels', {})
                     for channel_id_str in db_channels.keys():
                         channel_id = int(channel_id_str)
@@ -117,10 +112,8 @@ async def start_command(client: Client, message: Message):
                             source_channel_id = channel_id
                             start = start_test
                             end = end_test
-                            client.LOGGER(__name__, client.name).info(f"Decoded batch from secondary channel {source_channel_id}: {start}-{end}")
                             break
                     
-                    # Fallback to primary if no match found
                     if source_channel_id is None:
                         source_channel_id = client.db
                         start = start_primary
@@ -129,10 +122,8 @@ async def start_command(client: Client, message: Message):
                 ids = list(range(start, end + 1)) if start <= end else list(range(start, end - 1, -1))
 
             elif len(argument) == 2:
-                # Single message
                 encoded_msg = int(argument[1])
                 
-                # Try primary channel first
                 if hasattr(client, 'db_channel') and client.db_channel:
                     primary_multiplier = abs(client.db_channel.id)
                     msg_id_primary = int(encoded_msg / primary_multiplier)
@@ -141,7 +132,6 @@ async def start_command(client: Client, message: Message):
                         source_channel_id = client.db_channel.id
                         ids = [msg_id_primary]
                     else:
-                        # Try secondary channels
                         db_channels = getattr(client, 'db_channels', {})
                         for channel_id_str in db_channels.keys():
                             channel_id = int(channel_id_str)
@@ -153,12 +143,10 @@ async def start_command(client: Client, message: Message):
                                 ids = [msg_id_test]
                                 break
                         
-                        # Fallback to primary
                         if source_channel_id is None:
                             source_channel_id = client.db_channel.id if hasattr(client, 'db_channel') else client.db
                             ids = [msg_id_primary]
                 else:
-                    # Fallback for legacy compatibility
                     source_channel_id = client.db
                     ids = [int(encoded_msg / abs(client.db))]
 
@@ -166,13 +154,25 @@ async def start_command(client: Client, message: Message):
             client.LOGGER(__name__, client.name).warning(f"Error decoding base64: {e}")
             return await message.reply("⚠️ Invalid or expired link.")
 
-        # 7. Get messages from the specific source channel first
-        temp_msg = await message.reply("Wait A Sec..")
+        # 7. Get messages with text animation
+        temp_msg = await message.reply("Wait A Sec.")
+        
+        async def text_loading_anim():
+            dots = ["Wait A Sec..", "Wait A Sec...", "Wait A Sec."]
+            idx = 0
+            try:
+                while True:
+                    await asyncio.sleep(0.4)
+                    await temp_msg.edit_text(dots[idx % len(dots)])
+                    idx += 1
+            except Exception:
+                pass
+
+        anim_task = asyncio.create_task(text_loading_anim())
         messages = []
 
         try:
             if source_channel_id:
-                client.LOGGER(__name__, client.name).info(f"Trying to get messages from source channel: {source_channel_id}")
                 try:
                     msgs = await client.get_messages(
                         chat_id=source_channel_id,
@@ -180,28 +180,23 @@ async def start_command(client: Client, message: Message):
                     )
                     valid_msgs = [msg for msg in msgs if msg is not None]
                     messages.extend(valid_msgs)
-                    client.LOGGER(__name__, client.name).info(f"Found {len(valid_msgs)} messages from source channel {source_channel_id}")
                     
                     if len(valid_msgs) < len(list(ids)):
                         missing_ids = [mid for mid in ids if mid not in {msg.id for msg in valid_msgs}]
                         if missing_ids:
-                            client.LOGGER(__name__, client.name).info(f"Missing {len(missing_ids)} messages, trying fallback system")
                             additional_messages = await get_messages(client, missing_ids)
                             messages.extend(additional_messages)
-                            client.LOGGER(__name__, client.name).info(f"Found {len(additional_messages)} additional messages from fallback")
                 except Exception as e:
-                    client.LOGGER(__name__, client.name).warning(f"Error getting messages from source channel {source_channel_id}: {e}")
+                    client.LOGGER(__name__, client.name).warning(f"Error getting messages: {e}")
                     messages = await get_messages(client, ids)
             else:
-                client.LOGGER(__name__, client.name).info("No specific source channel identified, using multi-channel fallback")
                 messages = await get_messages(client, ids)
-        except Exception as e:
-            await temp_msg.edit_text("Something went wrong!")
-            client.LOGGER(__name__, client.name).warning(f"Error getting messages: {e}")
-            return
+        finally:
+            anim_task.cancel()
 
         if not messages:
-            return await temp_msg.edit("Couldn't find the files in the database.")
+            return await temp_msg.edit_text("Couldn't find the files in the database.")
+        
         await temp_msg.delete()
 
         yugen_msgs = []
@@ -279,6 +274,7 @@ async def start_command(client: Client, message: Message):
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
         return
+
 
 # =============================================================== #
 
