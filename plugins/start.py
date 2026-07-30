@@ -166,7 +166,7 @@ async def start_command(client: Client, message: Message):
             client.LOGGER(__name__, client.name).warning(f"Error decoding base64: {e}")
             return await message.reply("⚠️ Invalid or expired link.")
 
-                # 7. Get messages from the specific source channel first
+        # 7. Get messages from the specific source channel first
         temp_msg = await message.reply("ᴡᴀɪᴛ ᴀ sᴇᴄᴏɴᴅ .")
         await asyncio.sleep(0.5)
         await temp_msg.edit_text("ᴡᴀɪᴛ ᴀ sᴇᴄᴏɴᴅ . .")
@@ -257,12 +257,12 @@ async def start_command(client: Client, message: Message):
         return
 
         # 9. Normal start message
-        else:
-        temp_msg = await message.reply("ᴡᴀɪᴛ ᴀ sᴇᴄᴏɴᴅ .")
+            else:
+        temp_msg = await message.reply("Wait a second .")
         await asyncio.sleep(0.5)
-        await temp_msg.edit_text("ᴡᴀɪᴛ ᴀ sᴇᴄᴏɴᴅ . .")
+        await temp_msg.edit_text("Wait a second . .")
         await asyncio.sleep(0.5)
-        await temp_msg.edit_text("ᴡᴀɪᴛ ᴀ sᴇᴄᴏɴᴅ . . .")
+        await temp_msg.edit_text("Wait a second . . .")
         await asyncio.sleep(0.5)
         await temp_msg.delete()
 
@@ -270,7 +270,6 @@ async def start_command(client: Client, message: Message):
         if user_id in client.admins:
             buttons.insert(0, [InlineKeyboardButton("⛩️ ꜱᴇᴛᴛɪɴɢꜱ ⛩️", callback_data="settings")])
 
-        photo = client.messages.get("START_PHOTO", "")
         start_caption = client.messages.get('START', 'Welcome, {mention}').format(
             first=message.from_user.first_name,
             last=message.from_user.last_name,
@@ -279,21 +278,12 @@ async def start_command(client: Client, message: Message):
             id=message.from_user.id
         )
 
-        if photo:
-            await client.send_photo(
-                chat_id=message.chat.id,
-                photo=photo,
-                caption=start_caption,
-                message_effect_id=MSG_EFFECT,
-                reply_markup=InlineKeyboardMarkup(buttons)
-            )
-        else:
-            await client.send_message(
-                chat_id=message.chat.id,
-                text=start_caption,
-                message_effect_id=MSG_EFFECT,
-                reply_markup=InlineKeyboardMarkup(buttons)
-            )
+        await client.send_message(
+            chat_id=message.chat.id,
+            text=start_caption,
+            message_effect_id=MSG_EFFECT,
+            reply_markup=InlineKeyboardMarkup(buttons)
+        )
         return
 
 
