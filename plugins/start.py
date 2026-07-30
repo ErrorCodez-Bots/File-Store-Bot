@@ -166,25 +166,13 @@ async def start_command(client: Client, message: Message):
             client.LOGGER(__name__, client.name).warning(f"Error decoding base64: {e}")
             return await message.reply("⚠️ Invalid or expired link.")
 
-        # 7. Get messages from the specific source channel first
-        temp_msg = await message.reply("Wait a second .")
-
-        async def text_loading_anim():
-            dots = [
-                "ᴡᴀɪᴛ ᴀ sᴇᴄᴏɴᴅ .",
-                "ᴡᴀɪᴛ ᴀ sᴇᴄᴏɴᴅ . .",
-                "ᴡᴀɪᴛ ᴀ sᴇᴄᴏɴᴅ . . ."
-            ]
-            idx = 0
-            try:
-                while True:
-                    await asyncio.sleep(0.4)
-                    await temp_msg.edit_text(dots[idx % len(dots)])
-                    idx += 1
-            except Exception:
-                pass
-
-        anim_task = asyncio.create_task(text_loading_anim())
+                # 7. Get messages from the specific source channel first
+        temp_msg = await message.reply("ᴡᴀɪᴛ ᴀ sᴇᴄᴏɴᴅ .")
+        await asyncio.sleep(0.5)
+        await temp_msg.edit_text("ᴡᴀɪᴛ ᴀ sᴇᴄᴏɴᴅ . .")
+        await asyncio.sleep(0.5)
+        await temp_msg.edit_text("ᴡᴀɪᴛ ᴀ sᴇᴄᴏɴᴅ . . .")
+        await asyncio.sleep(0.5)
         messages = []
 
         try:
@@ -213,10 +201,10 @@ async def start_command(client: Client, message: Message):
                 client.LOGGER(__name__, client.name).info("No specific source channel identified, using multi-channel fallback")
                 messages = await get_messages(client, ids)
         except Exception as e:
-            anim_task.cancel()
             await temp_msg.edit_text("Something went wrong!")
             client.LOGGER(__name__, client.name).warning(f"Error getting messages: {e}")
             return
+
         finally:
             anim_task.cancel()
 
