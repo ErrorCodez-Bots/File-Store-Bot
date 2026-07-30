@@ -268,8 +268,33 @@ async def start_command(client: Client, message: Message):
             ))
         return
 
-    # 9. Normal start message
+        # 9. Normal start message
     else:
+        temp_msg = await message.reply("Wait a second .")
+
+        async def text_loading_anim():
+            dots = [
+                "ᴡᴀɪᴛ ᴀ sᴇᴄᴏɴᴅ .",
+                "ᴡᴀɪᴛ ᴀ sᴇᴄᴏɴᴅ . .",
+                "ᴡᴀɪᴛ ᴀ sᴇᴄᴏɴᴅ . . ."
+            ]
+            idx = 0
+            try:
+                while True:
+                    await asyncio.sleep(0.4)
+                    await temp_msg.edit_text(dots[idx % len(dots)])
+                    idx += 1
+            except Exception:
+                pass
+
+        anim_task = asyncio.create_task(text_loading_anim())
+        
+        # லோடிங் டைமர்க்காக வெயிட் செய்கிறோம்
+        await asyncio.sleep(2)
+
+        anim_task.cancel()
+        await temp_msg.delete()
+
         buttons = [[InlineKeyboardButton("Help", callback_data="about"), InlineKeyboardButton("Close", callback_data='close')]]
         if user_id in client.admins:
             buttons.insert(0, [InlineKeyboardButton("⛩️ ꜱᴇᴛᴛɪɴɢꜱ ⛩️", callback_data="settings")])
