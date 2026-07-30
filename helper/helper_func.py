@@ -316,18 +316,6 @@ def force_sub(func):
                 "<code>Wait a second .</code>"
             )
 
-        # Animated dots animation on the temporary message
-        for dots in [" .", " . .", " . . ."]:
-            await asyncio.sleep(0.4)
-            try:
-                text_to_show = f"Wait a second{dots}"
-                if photo:
-                    await msg.edit_caption(caption=text_to_show)
-                else:
-                    await msg.edit_text(text=f"<code>{text_to_show}</code>")
-            except Exception:
-                pass
-
         user_id = message.from_user.id
         statuses = await check_subscription(client, user_id)
 
